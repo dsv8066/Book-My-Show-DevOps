@@ -1,0 +1,17 @@
+# Node.js dependencies
+node_modules/
+**/node_modules/
+
+# AWS CLI installation files
+aws/
+**/aws/
+awscliv2.zip
+**/awscliv2.zip
+
+# Backup files
+*.backup
+*.bak
+
+# Build output
+build/
+dist/
