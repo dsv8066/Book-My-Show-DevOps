@@ -15,3 +15,15 @@ awscliv2.zip
 # Build output
 build/
 dist/
+
+
+# Monitoring credentials
+monitoring/.env
+
+# Configuration backups
+monitoring/*.backup
+
+# Kubernetes credentials
+**/kubeconfig
+**/*kubeconfig*
+*.token
