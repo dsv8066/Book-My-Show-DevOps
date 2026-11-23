@@ -1,40 +1,70 @@
 ---
-- name: Deploy BookMyShow application on Kubernetes
+- name: Deploy BookMyShow application to K3s
   hosts: local
   gather_facts: false
 
   vars:
-    project_dir: "{{ playbook_dir }}/.."
+    ecr_image: ""
 
   tasks:
-    - name: Apply BookMyShow Kubernetes deployment
-      command: kubectl apply -f {{ project_dir }}/deployment.yml
-      register: deployment_result
-      changed_when: "'configured' in deployment_result.stdout or 'created' in deployment_result.stdout"
+    - name: Validate ECR image
+      ansible.builtin.assert:
+        that:
+          - ecr_image | length > 0
+        fail_msg: "ECR image must be provided by Jenkins."
 
-    - name: Apply BookMyShow Kubernetes service
-      command: kubectl apply -f {{ project_dir }}/service.yml
-      register: service_result
-      changed_when: "'configured' in service_result.stdout or 'created' in service_result.stdout"
+    - name: Update Kubernetes deployment image
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - set
+          - image
+          - deployment/bms-app
+          - "bms-container={{ ecr_image }}"
+      register: image_update
+      changed_when: "'image updated' in image_update.stdout"
 
-    - name: Wait for BookMyShow deployment rollout
-      command: kubectl rollout status deployment/bms-app --timeout=180s
+    - name: Display image update result
+      ansible.builtin.debug:
+        var: image_update.stdout
+
+    - name: Wait for Kubernetes rollout
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - rollout
+          - status
+          - deployment/bms-app
+          - --timeout=180s
       changed_when: false
 
-    - name: Display Kubernetes deployment
-      command: kubectl get deployments
-      register: deployment_status
+    - name: Verify deployed image
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - get
+          - deployment
+          - bms-app
+          - -o
+          - jsonpath={.spec.template.spec.containers[0].image}
+      register: deployed_image
       changed_when: false
 
-    - name: Display deployment status
-      debug:
-        var: deployment_status.stdout_lines
+    - name: Display deployed image
+      ansible.builtin.debug:
+        var: deployed_image.stdout
 
-    - name: Display BookMyShow pods
-      command: kubectl get pods -l app=bms
+    - name: Verify application pods
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - get
+          - pods
+          - -l
+          - app=bms
       register: pod_status
       changed_when: false
 
-    - name: Show pod status
-      debug:
+    - name: Display pod status
+      ansible.builtin.debug:
         var: pod_status.stdout_lines
