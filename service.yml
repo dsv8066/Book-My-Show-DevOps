@@ -5,9 +5,11 @@ metadata:
   labels:
     app: bms
 spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-    targetPort: 3000  # Replace with the port your app runs on
+  type: ClusterIP
   selector:
     app: bms
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

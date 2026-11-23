@@ -14,8 +14,30 @@ spec:
       labels:
         app: bms
     spec:
+      imagePullSecrets:
+        - name: ecr-registry
       containers:
-      - name: bms-container
-        image: kastrov/bms:latest  # Replace with your Docker image
-        ports:
-        - containerPort: 3000  # Replace with the port your app runs on
+        - name: bms-container
+          image: 024189896801.dkr.ecr.ap-southeast-2.amazonaws.com/bookmyshow-app:build-5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 20
