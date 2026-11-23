@@ -1,0 +1,34 @@
+---
+- name: Verify BookMyShow Kubernetes application
+  hosts: local
+  gather_facts: false
+
+  tasks:
+    - name: Check Kubernetes node
+      command: kubectl get nodes
+      register: node_result
+      changed_when: false
+
+    - name: Display Kubernetes node
+      debug:
+        var: node_result.stdout_lines
+
+    - name: Check BookMyShow service
+      command: kubectl get service bms-service
+      register: service_result
+      changed_when: false
+
+    - name: Display service
+      debug:
+        var: service_result.stdout_lines
+
+    - name: Check application deployment
+      command: kubectl rollout status deployment/bms-app --timeout=180s
+      changed_when: false
+
+    - name: Check application HTTP response
+      uri:
+        url: http://127.0.0.1:8082
+        method: GET
+        status_code: 200
+      delegate_to: localhost
